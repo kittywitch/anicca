@@ -45,7 +45,7 @@ let
     paths);
   persistence = {
     root = multiHelper { inherit (node.environment) persistence; };
-    users = mapAttrs (_: v: multiHelper { inherit (v.home) persistence; location = v.home.homeDirectory; }) node.home-manager.users;
+    users = mapAttrs (_: user: multiHelper { inherit (user.home) persistence; location = user.home.homeDirectory; }) node.home-manager.users;
   };
   summarySection = section: ''
     ${concatStringsSep "\n" (map (path: ''
