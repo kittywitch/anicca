@@ -63,13 +63,14 @@ let
     echo -e "''${CYAN}Directories:''${NOCOLOR}"
     ${summarySection { section = persist.directories; }}
   '' else ''
-    echo -e "''${ORANGE} ! No directories set.''${NOCOLOR}"
-  '')
-  + (if length persist.files > 0 then ''
+    echo -e "''${ORANGE}<!> No directories set.''${NOCOLOR}"
+  '') + ''
+    echo ""
+  '' + (if length persist.files > 0 then ''
     echo -e "''${CYAN}Files:''${NOCOLOR}"
     ${summarySection { section = persist.files; isFiles = true; }}
   '' else ''
-    echo -e "''${ORANGE} ! No files set.''${NOCOLOR}"
+    echo -e "''${ORANGE}<!> No files set.''${NOCOLOR}"
   '') + ''echo -e ""'';
   summaries = {
     root = summaryGen {
