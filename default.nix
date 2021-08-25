@@ -54,10 +54,7 @@ let
     root = multiHelper { inherit (node.environment) persistence; };
     users = mapAttrs (_: v: multiHelper { inherit (v.home) persistence; location = v.home.homeDirectory; }) node.home-manager.users;
   };
-  summaryGen = { scope, persist }:
-    let
-    in
-    ''
+  summaryGen = { scope, persist }: ''
       echo -e "''${BLUE}Summary for ${scope}:''${NOCOLOR}\n"
     ''
     + (if length persist.directories > 0 then ''
