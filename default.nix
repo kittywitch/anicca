@@ -23,61 +23,51 @@ let
         pathList
       )
       values));
-  multiHelper = { location ? "", persistence }: genAttrs [ "directories" "files" ] (key:
+  attrs = [ "directories" "files" ];
+  multiHelper = { location ? "", persistence }: genAttrs attrs (key:
     persistHelper {
       values = mapAttrs (_: v: v.${key}) persistence;
       inherit location;
     }
   );
-  dirCreator = dirs: concatStringsSep "\n" (map
-    (dir: ''
-      mkdir -pv ${dir.to.path}
-      if [[ -d "${dir.from.path}" ]]; then
-        cp -v ${dir.from.path} ${dir.to.path}
+  genCreator = { paths, isFiles ? false }: concatStringsSep "\n" (map
+    (path: ''
+      mkdir -pv ${path.to.path}
+      if [[ -d "${path.from.path}" ]]; then
+        cp -v ${path.from.path} ${path.to.path}
       else
-        echo -e "'${dir.from.path}' -/-> '${dir.to.path}'"
+        echo -e "'${path.from.path}' -/-> '${path.to.path}'"
+        ${lib.optionalString isFiles ''
+        touch ${path.to.path}
+        echo -e "touched: ${path.to.path}"
+          ''}
       fi'')
-    dirs);
-  fileCreator = files: concatStringsSep "\n" (map
-    (file: ''
-      mkdir -pv ${file.to.folder}
-      if [[ -f "${file.from.path}" ]]; then
-        cp ${file.from.path} ${file.to.folder}
-      else
-        echo -e "'${file.from.path}' -/-> '${file.to.path}'"
-        touch ${file.to.path}
-        echo -e "touched: ${file.to.path}"
-      fi
-    '')
-    files);
+    paths);
   persistence = {
     root = multiHelper { inherit (node.environment) persistence; };
     users = mapAttrs (_: v: multiHelper { inherit (v.home) persistence; location = v.home.homeDirectory; }) node.home-manager.users;
   };
+  summarySection = section: ''
+      ${concatStringsSep "\n" (map (path: ''
+        if [[ -d "${path.from.path}" ]]; then
+          echo -e " ~ '${path.from.path}' -> '${path.to.path}'"
+        else
+          echo -e " + '${path.to.path}'"
+        fi
+      '') section)}
+  '';
   summaryGen = { scope, persist }: ''
       echo -e "''${BLUE}Summary for ${scope}:''${NOCOLOR}\n"
     ''
     + (if length persist.directories > 0 then ''
       echo -e "''${CYAN}Directories:''${NOCOLOR}"
-      ${concatStringsSep "\n" (map (dir: ''
-        if [[ -d "${dir.from.path}" ]]; then
-          echo -e " ~ '${dir.from.path}' -> '${dir.to.path}'"
-        else
-          echo -e " + '${dir.to.path}'"
-        fi
-      '') persist.directories)}
+      ${summarySection persist.directories}
     '' else ''
       echo -e "''${ORANGE} ! No directories set.''${NOCOLOR}"
     '')
     + (if length persist.files > 0 then ''
       echo -e "''${CYAN}Files:''${NOCOLOR}"
-          ${concatStringsSep "\n" (map (file: ''
-          if [[ -f "${file.from.path}" ]]; then
-            echo -e " ~ '${file.from.path}' -> '${file.to.folder}'"
-          else
-            echo -e " + '${file.to.path}'"
-          fi
-        '') persist.files)}
+      ${summarySection persist.files}
     '' else ''
       echo -e "''${ORANGE} ! No files set.''${NOCOLOR}"
     '') + ''echo -e ""'';
@@ -94,43 +84,27 @@ let
       persistence.users;
   };
   scripts = {
-    root = {
-      directories = dirCreator persistence.root.directories;
-      files = fileCreator persistence.root.files;
-    };
-    users = mapAttrs
-      (username: persist: rec {
-        directories = dirCreator persist.directories;
-        files = fileCreator persist.files;
+    root = genAttrs attrs (attr: genCreator { paths = persistence.root.${attr}; isFiles = (attr == "files"); } );
+    users = mapAttrs (username: persist:
+      let self = genAttrs attrs (attr: genCreator { paths = persist.${attr}; isFiles = (attr == "files"); } ) // {
         runner = ''
           STAGE=$(($STAGE+1))
           echo -e "\n''${CYAN}Stage $STAGE: home-manager/${username} - Directories''${NOCOLOR}"
-          ${directories}
+          ${self.directories}
           STAGE=$((STAGE+1))
           echo -e "\n''${CYAN}Stage $STAGE: home-manager/${username} - Files''${NOCOLOR}"
-          ${files}
+          ${self.files}
         '';
-      })
-      persistence.users;
+      }; in self) persistence.users;
   };
 in
 writeShellScriptBin "anicca-${node.networking.hostName}" ''
   NOCOLOR='\033[0m'
-  RED='\033[0;31m'
   GREEN='\033[0;32m'
   ORANGE='\033[0;33m'
   BLUE='\033[0;34m'
   PURPLE='\033[0;35m'
   CYAN='\033[0;36m'
-  LIGHTGRAY='\033[0;37m'
-  DARKGRAY='\033[1;30m'
-  LIGHTRED='\033[1;31m'
-  LIGHTGREEN='\033[1;32m'
-  YELLOW='\033[1;33m'
-  LIGHTBLUE='\033[1;34m'
-  LIGHTPURPLE='\033[1;35m'
-  LIGHTCYAN='\033[1;36m'
-  WHITE='\033[1;37m'
   COLS=$(tput cols)
   ${figlet}/bin/figlet -w $COLS  -c anicca | ${lolcat}/bin/lolcat -f  -p 0.5
   SUBTITLE="A helper for transitioning to impermanence."
