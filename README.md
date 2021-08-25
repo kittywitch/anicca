@@ -1,4 +1,4 @@
 # anicca
-A helper system for migrating an existing system to impermanence
+A helper for transitioning to impermanence
 
 ![An example of usage](./example/screenshot.png)
