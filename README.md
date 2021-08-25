@@ -7,6 +7,8 @@ A helper for transitioning to impermanence
 
 ## Examples
 
-`nix run -f . pkgs.anicca --arg node "(with import ./.; network.nodes.samhain)" -c anicca-samhain`
+```bash
+nix run -f . pkgs.anicca --arg node "(with import ./.; network.nodes.samhain)" -c anicca-samhain
+```
 
 ![An example of usage](./example/screenshot.png)
