@@ -34,7 +34,7 @@ let
     (path: ''
       mkdir -pv ${if isFiles then path.to.folder else path.to.path}
       if [[ -d "${path.from.path}" ]]; then
-        cp -v ${path.from.path} ${path.to.path}
+        cp -v${lib.optionalString !isFiles "r"} ${path.from.path} ${path.to.path}
       else
         echo -e "'${path.from.path}' -/-> '${path.to.path}'"
         ${lib.optionalString isFiles ''
