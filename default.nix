@@ -33,7 +33,7 @@ let
   genCreator = { paths, isFiles ? false }: concatStringsSep "\n" (map
     (path: ''
       mkdir -pv ${if isFiles then path.to.folder else path.to.path}
-      if [[ -d "${path.from.path}" ]]; then
+      if [[ -${if isFiles then "f" else "d"} "${path.from.path}" ]]; then
         cp -v${optionalString (!isFiles) "r"} ${path.from.path} ${path.to.path}
       else
         echo -e "'${path.from.path}' -/-> '${path.to.path}'"
