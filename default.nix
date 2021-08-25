@@ -17,7 +17,7 @@ let
     mapAttrs
       (persist: pathList: map
         (path: {
-          from = fileStructure "${if location != "" then "${location}/" else ""}${path}";
+          from = fileStructure "${optionalString (location != "") "${location}/"}${path}";
           to = fileStructure "${persist}${if location != "" then "/${path}" else "${path}"}";
         })
         pathList
@@ -34,10 +34,10 @@ let
     (path: ''
       mkdir -pv ${if isFiles then path.to.folder else path.to.path}
       if [[ -d "${path.from.path}" ]]; then
-        cp -v${lib.optionalString (!isFiles) "r"} ${path.from.path} ${path.to.path}
+        cp -v${optionalString (!isFiles) "r"} ${path.from.path} ${path.to.path}
       else
         echo -e "'${path.from.path}' -/-> '${path.to.path}'"
-        ${lib.optionalString isFiles ''
+        ${optionalString isFiles ''
         touch ${path.to.path}
         echo -e "touched: ${path.to.path}"
           ''}
