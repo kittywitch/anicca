@@ -47,9 +47,9 @@ let
     root = multiHelper { inherit (node.environment) persistence; };
     users = mapAttrs (_: user: multiHelper { inherit (user.home) persistence; location = user.home.homeDirectory; }) node.home-manager.users;
   };
-  summarySection = section: ''
+  summarySection = { section, isFiles ? false }: ''
     ${concatStringsSep "\n" (map (path: ''
-      if [[ -d "${path.from.path}" ]]; then
+      if [[ -${if isFiles then "f" else "d"} "${path.from.path}" ]]; then
         echo -e " ~ '${path.from.path}' -> '${path.to.path}'"
       else
         echo -e " + '${path.to.path}'"
@@ -61,13 +61,13 @@ let
   ''
   + (if length persist.directories > 0 then ''
     echo -e "''${CYAN}Directories:''${NOCOLOR}"
-    ${summarySection persist.directories}
+    ${summarySection { section = persist.directories; }}
   '' else ''
     echo -e "''${ORANGE} ! No directories set.''${NOCOLOR}"
   '')
   + (if length persist.files > 0 then ''
     echo -e "''${CYAN}Files:''${NOCOLOR}"
-    ${summarySection persist.files}
+    ${summarySection { section = persist.files; isFiles = true; }}
   '' else ''
     echo -e "''${ORANGE} ! No files set.''${NOCOLOR}"
   '') + ''echo -e ""'';
