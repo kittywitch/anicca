@@ -1,4 +1,4 @@
-{ lib, figlet, lolcat, writeShellScriptBin }: node:
+{ lib, figlet, lolcat, writeShellScriptBin }: { node }:
 
 with lib;
 
@@ -42,10 +42,10 @@ let
   fileCreator = files: concatStringsSep "\n" (map
     (file: ''
       mkdir -pv ${file.to.folder}
-      if [[ -f "${file.from.path} ]]; then
+      if [[ -f "${file.from.path}" ]]; then
         cp ${file.from.path} ${file.to.folder}
       else
-        echo -e "'${file.from.path}' -/-> ${file.to.path}
+        echo -e "'${file.from.path}' -/-> '${file.to.path}'"
         touch ${file.to.path}
         echo -e "touched: ${file.to.path}"
       fi
@@ -112,7 +112,7 @@ let
       '';
     }) persistence.users;
   };
-in ''
+in writeShellScriptBin "anicca-${node.networking.hostName}" ''
 NOCOLOR='\033[0m'
 RED='\033[0;31m'
 GREEN='\033[0;32m'
