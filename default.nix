@@ -7,11 +7,11 @@ let
     let
       splitPath = splitString "/" path;
       reversedPath = reverseList splitPath;
-      filename = head reversedPath;
-      folder = "${concatStringsSep "/" (reverseList (tail reversedPath))}";
     in
     {
-      inherit filename folder path;
+      folder = "${concatStringsSep "/" (reverseList (tail reversedPath))}";
+      filename = head reversedPath;
+      inherit path;
     };
   persistHelper = { values, location }: concatLists (attrValues (
     mapAttrs
@@ -34,7 +34,7 @@ let
     (path: ''
       mkdir -pv ${if isFiles then path.to.folder else path.to.path}
       if [[ -d "${path.from.path}" ]]; then
-        cp -v${lib.optionalString !isFiles "r"} ${path.from.path} ${path.to.path}
+        cp -v${lib.optionalString (!isFiles) "r"} ${path.from.path} ${path.to.path}
       else
         echo -e "'${path.from.path}' -/-> '${path.to.path}'"
         ${lib.optionalString isFiles ''
