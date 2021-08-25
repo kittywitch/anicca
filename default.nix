@@ -48,29 +48,29 @@ let
     users = mapAttrs (_: v: multiHelper { inherit (v.home) persistence; location = v.home.homeDirectory; }) node.home-manager.users;
   };
   summarySection = section: ''
-      ${concatStringsSep "\n" (map (path: ''
-        if [[ -d "${path.from.path}" ]]; then
-          echo -e " ~ '${path.from.path}' -> '${path.to.path}'"
-        else
-          echo -e " + '${path.to.path}'"
-        fi
-      '') section)}
+    ${concatStringsSep "\n" (map (path: ''
+      if [[ -d "${path.from.path}" ]]; then
+        echo -e " ~ '${path.from.path}' -> '${path.to.path}'"
+      else
+        echo -e " + '${path.to.path}'"
+      fi
+    '') section)}
   '';
   summaryGen = { scope, persist }: ''
-      echo -e "''${BLUE}Summary for ${scope}:''${NOCOLOR}\n"
-    ''
-    + (if length persist.directories > 0 then ''
-      echo -e "''${CYAN}Directories:''${NOCOLOR}"
-      ${summarySection persist.directories}
-    '' else ''
-      echo -e "''${ORANGE} ! No directories set.''${NOCOLOR}"
-    '')
-    + (if length persist.files > 0 then ''
-      echo -e "''${CYAN}Files:''${NOCOLOR}"
-      ${summarySection persist.files}
-    '' else ''
-      echo -e "''${ORANGE} ! No files set.''${NOCOLOR}"
-    '') + ''echo -e ""'';
+    echo -e "''${BLUE}Summary for ${scope}:''${NOCOLOR}\n"
+  ''
+  + (if length persist.directories > 0 then ''
+    echo -e "''${CYAN}Directories:''${NOCOLOR}"
+    ${summarySection persist.directories}
+  '' else ''
+    echo -e "''${ORANGE} ! No directories set.''${NOCOLOR}"
+  '')
+  + (if length persist.files > 0 then ''
+    echo -e "''${CYAN}Files:''${NOCOLOR}"
+    ${summarySection persist.files}
+  '' else ''
+    echo -e "''${ORANGE} ! No files set.''${NOCOLOR}"
+  '') + ''echo -e ""'';
   summaries = {
     root = summaryGen {
       scope = "NixOS";
@@ -84,18 +84,20 @@ let
       persistence.users;
   };
   scripts = {
-    root = genAttrs attrs (attr: genCreator { paths = persistence.root.${attr}; isFiles = (attr == "files"); } );
-    users = mapAttrs (username: persist:
-      let self = genAttrs attrs (attr: genCreator { paths = persist.${attr}; isFiles = (attr == "files"); } ) // {
-        runner = ''
-          STAGE=$(($STAGE+1))
-          echo -e "\n''${CYAN}Stage $STAGE: home-manager/${username} - Directories''${NOCOLOR}"
-          ${self.directories}
-          STAGE=$((STAGE+1))
-          echo -e "\n''${CYAN}Stage $STAGE: home-manager/${username} - Files''${NOCOLOR}"
-          ${self.files}
-        '';
-      }; in self) persistence.users;
+    root = genAttrs attrs (attr: genCreator { paths = persistence.root.${attr}; isFiles = (attr == "files"); });
+    users = mapAttrs
+      (username: persist:
+        let self = genAttrs attrs (attr: genCreator { paths = persist.${attr}; isFiles = (attr == "files"); }) // {
+          runner = ''
+            STAGE=$(($STAGE+1))
+            echo -e "\n''${CYAN}Stage $STAGE: home-manager/${username} - Directories''${NOCOLOR}"
+            ${self.directories}
+            STAGE=$((STAGE+1))
+            echo -e "\n''${CYAN}Stage $STAGE: home-manager/${username} - Files''${NOCOLOR}"
+            ${self.files}
+          '';
+        }; in self)
+      persistence.users;
   };
 in
 writeShellScriptBin "anicca-${node.networking.hostName}" ''
