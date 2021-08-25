@@ -13,7 +13,6 @@ let
     {
       inherit filename folder path;
     };
-  keyMapper = key: attr: mapAttrs (_: v: v.${key}) attr;
   persistHelper = { values, location }: concatLists (attrValues (
     mapAttrs
       (persist: pathList: map
@@ -26,7 +25,7 @@ let
       values));
   multiHelper = { location ? "", persistence }: genAttrs [ "directories" "files" ] (key:
     persistHelper {
-      values = keyMapper key persistence;
+      values = mapAttrs (_: v: v.${key}) persistence;
       inherit location;
     }
   );
